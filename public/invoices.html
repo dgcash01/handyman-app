@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice List - Handyman App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Invoice Management</h1>
+            <p class="text-gray-600">View and manage all your invoices</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex justify-center mb-8">
+            <a href="index.html" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">
+                Create New Invoice
+            </a>
+        </div>
+
+        <!-- Invoice List -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-gray-900">All Invoices</h2>
+                <button hx-get="/api/invoices" hx-target="#invoice-list" hx-swap="innerHTML"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                    Refresh
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="invoice-list" hx-get="/api/invoices" hx-trigger="load" hx-swap="innerHTML">
+                <div class="flex justify-center items-center py-12">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span class="ml-3 text-gray-600">Loading invoices...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Item Template (for reference) -->
+    <template id="invoice-item-template">
+        <div class="border border-gray-200 rounded-lg p-4 mb-4 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start">
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1">{clientName}</h3>
+                    <p class="text-gray-600 mb-2">{clientEmail}</p>
+                    <p class="text-sm text-gray-500 mb-2">Service: {serviceDescription}</p>
+                    <p class="text-sm text-gray-500">Date: {invoiceDate}</p>
+                </div>
+                <div class="text-right ml-4">
+                    <p class="text-xl font-bold text-gray-900 mb-2">${amount}</p>
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium {statusClass}">
+                            {paymentStatus}
+                        </span>
+                        <button hx-put="/api/invoices/{id}/status" 
+                                hx-target="closest .border" 
+                                hx-swap="outerHTML"
+                                class="text-blue-600 hover:text-blue-800 text-sm">
+                            Toggle Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</body>
+</html> 

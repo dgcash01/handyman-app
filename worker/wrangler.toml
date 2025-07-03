@@ -1,0 +1,15 @@
+name = "handyman-invoice-worker"
+main = "submit-invoice.js"
+compatibility_date = "2024-01-01"
+
+[env.production]
+name = "handyman-invoice-worker"
+
+[[r2_buckets]]
+binding = "INVOICE_BUCKET"
+bucket_name = "handyman-invoices"
+preview_bucket_name = "handyman-invoices-dev"
+
+[vars]
+SENDGRID_API_KEY = ""
+SENDGRID_FROM_EMAIL = "noreply@yourdomain.com" 
