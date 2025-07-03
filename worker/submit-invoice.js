@@ -70,7 +70,7 @@ async function handleInvoiceSubmission(request, env) {
   try {
     // Save to R2
     await env.INVOICE_BUCKET.put(
-      `${invoiceData.id}.json`,
+      `invoices/${invoiceData.id}.json`,
       JSON.stringify(invoiceData),
       { httpMetadata: { contentType: 'application/json' } }
     );
@@ -78,34 +78,73 @@ async function handleInvoiceSubmission(request, env) {
     // Send email
     await sendInvoiceEmail(invoiceData, env);
 
-    // Return success response for HTMX
+    // Return success response for HTMX - replace the entire form container
     const successHtml = `
-      <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-        <strong class="font-bold">Success!</strong>
-        <span class="block sm:inline">Invoice has been created and sent to ${invoiceData.clientEmail}</span>
-        <div class="mt-2">
-          <a href="invoices.html" class="text-green-800 underline">View all invoices</a>
+      <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="text-center py-8">
+          <div class="mb-4">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full">
+              <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">Invoice Created Successfully!</h2>
+          <p class="text-gray-600 mb-4">Your invoice has been generated and sent to <strong>${invoiceData.clientEmail}</strong></p>
+          <div class="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+            <h3 class="font-semibold text-gray-900 mb-2">Invoice Details:</h3>
+            <p><strong>Client:</strong> ${invoiceData.clientName}</p>
+            <p><strong>Service:</strong> ${invoiceData.serviceDescription}</p>
+            <p><strong>Amount:</strong> $${invoiceData.amount.toFixed(2)}</p>
+            <p><strong>Status:</strong> <span class="px-2 py-1 rounded-full text-xs font-medium ${invoiceData.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${invoiceData.paymentStatus}</span></p>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="index.html" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+              Create Another Invoice
+            </a>
+            <a href="invoices.html" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">
+              View All Invoices
+            </a>
+          </div>
         </div>
       </div>
     `;
 
     return new Response(successHtml, {
-      headers: { 'Content-Type': 'text/html' }
+      headers: { 
+        'Content-Type': 'text/html',
+        'Access-Control-Allow-Origin': '*'
+      }
     });
 
   } catch (error) {
     console.error('Error saving invoice:', error);
     
     const errorHtml = `
-      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-        <strong class="font-bold">Error!</strong>
-        <span class="block sm:inline">Failed to create invoice. Please try again.</span>
+      <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="text-center py-8">
+          <div class="mb-4">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full">
+              <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </div>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">Error Creating Invoice</h2>
+          <p class="text-gray-600 mb-6">Failed to create invoice. Please try again.</p>
+          <a href="index.html" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors">
+            Try Again
+          </a>
+        </div>
       </div>
     `;
 
     return new Response(errorHtml, {
       status: 500,
-      headers: { 'Content-Type': 'text/html' }
+      headers: { 
+        'Content-Type': 'text/html',
+        'Access-Control-Allow-Origin': '*'
+      }
     });
   }
 }
@@ -117,9 +156,12 @@ async function getInvoices(env) {
     const invoices = [];
 
     for (const obj of list.objects) {
-      const invoice = await env.INVOICE_BUCKET.get(obj.key);
-      if (invoice) {
-        invoices.push(JSON.parse(await invoice.text()));
+      // Only process files in the invoices/ directory
+      if (obj.key.startsWith('invoices/') && obj.key.endsWith('.json')) {
+        const invoice = await env.INVOICE_BUCKET.get(obj.key);
+        if (invoice) {
+          invoices.push(JSON.parse(await invoice.text()));
+        }
       }
     }
 
@@ -150,7 +192,7 @@ async function updateInvoiceStatus(invoiceId, request, env) {
     const { paymentStatus } = await request.json();
     
     // Get current invoice
-    const invoice = await env.INVOICE_BUCKET.get(`${invoiceId}.json`);
+    const invoice = await env.INVOICE_BUCKET.get(`invoices/${invoiceId}.json`);
     if (!invoice) {
       return new Response('Invoice not found', { status: 404 });
     }
@@ -161,7 +203,7 @@ async function updateInvoiceStatus(invoiceId, request, env) {
 
     // Update in R2
     await env.INVOICE_BUCKET.put(
-      `${invoiceId}.json`,
+      `invoices/${invoiceId}.json`,
       JSON.stringify(invoiceData),
       { httpMetadata: { contentType: 'application/json' } }
     );
