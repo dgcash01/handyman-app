@@ -6,6 +6,7 @@
     <title>Dashboard - Handyman App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="config.js"></script>
     <style>
         .htmx-indicator {
@@ -186,6 +187,35 @@
             </div>
         </div>
 
+        <!-- Revenue Chart -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">Revenue Overview</h2>
+                <div class="flex gap-2">
+                    <button onclick="updateChart('daily')" id="btn-daily" class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors">
+                        Daily
+                    </button>
+                    <button onclick="updateChart('weekly')" id="btn-weekly" class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        Weekly
+                    </button>
+                    <button onclick="updateChart('monthly')" id="btn-monthly" class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        Monthly
+                    </button>
+                    <button onclick="updateChart('ytd')" id="btn-ytd" class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        YTD
+                    </button>
+                </div>
+            </div>
+            
+            <div class="relative" style="height: 300px;">
+                <canvas id="revenueChart"></canvas>
+                <div id="chart-loading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span class="ml-3 text-gray-600">Loading chart...</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Recent Activity -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex items-center justify-between mb-6">
@@ -222,11 +252,17 @@
             });
         }
         
+        // Chart variables
+        let revenueChart = null;
+        let currentChartType = 'daily';
+        let allInvoices = [];
+
         // Check authentication on page load
         document.addEventListener('DOMContentLoaded', function() {
             checkAuth();
             loadDashboardStats();
             loadRecentInvoices();
+            initializeChart();
         });
         
         function checkAuth() {
@@ -404,6 +440,174 @@
                 menuDropdown.classList.add('hidden');
             }
         });
+
+        // Chart functionality
+        async function initializeChart() {
+            try {
+                // Load all invoices for chart data
+                const response = await fetch(HANDYMAN_CONFIG.getEndpoint('/api/invoices'), {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    allInvoices = await response.json();
+                    updateChart('daily'); // Start with daily view
+                }
+            } catch (error) {
+                console.error('Error loading chart data:', error);
+                document.getElementById('chart-loading').innerHTML = '<p class="text-red-500">Error loading chart data</p>';
+            }
+        }
+
+        function updateChart(type) {
+            currentChartType = type;
+            
+            // Update button styles
+            document.querySelectorAll('[id^="btn-"]').forEach(btn => {
+                btn.className = 'px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors';
+            });
+            document.getElementById(`btn-${type}`).className = 'px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors';
+            
+            // Show loading
+            document.getElementById('chart-loading').classList.remove('hidden');
+            
+            // Process data based on type
+            const chartData = processChartData(type);
+            
+            // Create or update chart
+            if (revenueChart) {
+                revenueChart.destroy();
+            }
+            
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: 'Revenue',
+                        data: chartData.data,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+            
+            // Hide loading
+            document.getElementById('chart-loading').classList.add('hidden');
+        }
+
+        function processChartData(type) {
+            const now = new Date();
+            const data = [];
+            const labels = [];
+            
+            switch (type) {
+                case 'daily':
+                    // Last 30 days
+                    for (let i = 29; i >= 0; i--) {
+                        const date = new Date(now);
+                        date.setDate(date.getDate() - i);
+                        const dateStr = date.toISOString().split('T')[0];
+                        
+                        const dayRevenue = allInvoices
+                            .filter(invoice => invoice.invoiceDate === dateStr)
+                            .reduce((sum, invoice) => sum + parseFloat(invoice.amount), 0);
+                        
+                        data.push(dayRevenue);
+                        labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                    }
+                    break;
+                    
+                case 'weekly':
+                    // Last 12 weeks
+                    for (let i = 11; i >= 0; i--) {
+                        const weekStart = new Date(now);
+                        weekStart.setDate(weekStart.getDate() - (weekStart.getDay() + 7 * i));
+                        const weekEnd = new Date(weekStart);
+                        weekEnd.setDate(weekEnd.getDate() + 6);
+                        
+                        const weekRevenue = allInvoices
+                            .filter(invoice => {
+                                const invoiceDate = new Date(invoice.invoiceDate);
+                                return invoiceDate >= weekStart && invoiceDate <= weekEnd;
+                            })
+                            .reduce((sum, invoice) => sum + parseFloat(invoice.amount), 0);
+                        
+                        data.push(weekRevenue);
+                        labels.push(`Week ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`);
+                    }
+                    break;
+                    
+                case 'monthly':
+                    // Last 12 months
+                    for (let i = 11; i >= 0; i--) {
+                        const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                        const monthRevenue = allInvoices
+                            .filter(invoice => {
+                                const invoiceDate = new Date(invoice.invoiceDate);
+                                return invoiceDate.getMonth() === month.getMonth() && 
+                                       invoiceDate.getFullYear() === month.getFullYear();
+                            })
+                            .reduce((sum, invoice) => sum + parseFloat(invoice.amount), 0);
+                        
+                        data.push(monthRevenue);
+                        labels.push(month.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+                    }
+                    break;
+                    
+                case 'ytd':
+                    // Year to date by month
+                    const currentYear = now.getFullYear();
+                    for (let month = 0; month <= now.getMonth(); month++) {
+                        const monthRevenue = allInvoices
+                            .filter(invoice => {
+                                const invoiceDate = new Date(invoice.invoiceDate);
+                                return invoiceDate.getMonth() === month && 
+                                       invoiceDate.getFullYear() === currentYear;
+                            })
+                            .reduce((sum, invoice) => sum + parseFloat(invoice.amount), 0);
+                        
+                        data.push(monthRevenue);
+                        labels.push(new Date(currentYear, month, 1).toLocaleDateString('en-US', { month: 'short' }));
+                    }
+                    break;
+            }
+            
+            return { labels, data };
+        }
     </script>
 </body>
 </html> 
