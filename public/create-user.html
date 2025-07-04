@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create User - Handyman App</title>
+    <script src="config.js"></script>
+</head>
+<body>
+    <h1>Create John's User Account</h1>
+    <div id="output"></div>
+    
+    <script>
+        function log(message) {
+            document.getElementById('output').innerHTML += '<p>' + message + '</p>';
+        }
+        
+        async function createUser() {
+            log('Creating John\'s user account...');
+            
+            try {
+                const formData = new URLSearchParams();
+                formData.append('businessName', "John's Handyman Services");
+                formData.append('email', 'john@handyman.com');
+                formData.append('password', 'password123');
+                
+                const response = await fetch(HANDYMAN_CONFIG.getEndpoint('/auth/register'), {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                log('Registration response status: ' + response.status);
+                
+                if (response.ok) {
+                    const html = await response.text();
+                    log('Registration successful!');
+                    log('Response: ' + html.substring(0, 200));
+                } else {
+                    const errorText = await response.text();
+                    log('Registration failed: ' + errorText);
+                }
+                
+            } catch (error) {
+                log('ERROR: ' + error.message);
+            }
+        }
+        
+        // Run the test
+        createUser();
+    </script>
+</body>
+</html> 

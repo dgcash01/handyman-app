@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Login Test</title>
+    <script src="config.js"></script>
+</head>
+<body>
+    <h1>Simple Login Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        function log(message) {
+            document.getElementById('output').innerHTML += '<p>' + message + '</p>';
+        }
+        
+        async function testLogin() {
+            log('Starting login test...');
+            
+            try {
+                // Test 1: Try to login
+                log('Step 1: Attempting login...');
+                const formData = new URLSearchParams();
+                formData.append('email', 'john@handyman.com');
+                formData.append('password', 'password123');
+                
+                const response = await fetch(HANDYMAN_CONFIG.getEndpoint('/auth/login'), {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                log('Step 2: Login response status: ' + response.status);
+                
+                if (response.ok) {
+                    const html = await response.text();
+                    log('Step 3: Got HTML response, length: ' + html.length);
+                    
+                    // Extract session token
+                    const sessionMatch = html.match(/localStorage\.setItem\('sessionToken', '([^']+)'\)/);
+                    if (sessionMatch) {
+                        const sessionToken = sessionMatch[1];
+                        log('Step 4: Found session token: ' + sessionToken.substring(0, 20) + '...');
+                        
+                        // Save to localStorage
+                        localStorage.setItem('sessionToken', sessionToken);
+                        localStorage.setItem('userEmail', 'john@handyman.com');
+                        localStorage.setItem('businessName', "John's Handyman Services");
+                        
+                        log('Step 5: Saved to localStorage');
+                        
+                        // Test 2: Try to access API
+                        log('Step 6: Testing API access...');
+                        const apiResponse = await fetch(HANDYMAN_CONFIG.getEndpoint('/api/invoices'), {
+                            headers: {
+                                'Authorization': `Bearer ${sessionToken}`
+                            }
+                        });
+                        
+                        log('Step 7: API response status: ' + apiResponse.status);
+                        
+                        if (apiResponse.ok) {
+                            const data = await apiResponse.json();
+                            log('Step 8: API call successful! Found ' + data.length + ' invoices');
+                            log('SUCCESS: Login and API access working!');
+                        } else {
+                            log('Step 8: API call failed with status: ' + apiResponse.status);
+                            const errorText = await apiResponse.text();
+                            log('Error details: ' + errorText.substring(0, 200));
+                        }
+                        
+                    } else {
+                        log('Step 4: Could not find session token in response');
+                        log('Response preview: ' + html.substring(0, 500));
+                    }
+                } else {
+                    log('Step 3: Login failed');
+                    const errorText = await response.text();
+                    log('Error: ' + errorText);
+                }
+                
+            } catch (error) {
+                log('ERROR: ' + error.message);
+            }
+        }
+        
+        // Run the test
+        testLogin();
+    </script>
+</body>
+</html> 
