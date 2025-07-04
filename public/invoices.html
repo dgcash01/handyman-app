@@ -18,17 +18,38 @@
             </div>
             <div class="flex items-center gap-4">
                 <span class="text-sm text-gray-600" id="user-info"></span>
-                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
-                    Logout
-                </button>
+                
+                <!-- Hamburger Menu -->
+                <div class="relative">
+                    <button id="menu-button" class="p-2 rounded-lg hover:bg-gray-200 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="menu-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden z-50">
+                        <div class="py-2">
+                            <a href="index.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                                Create Invoice
+                            </a>
+                            <a href="quick-quote.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                                Create Quote
+                            </a>
+                            <a href="quotes.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                                View Quotes
+                            </a>
+                            <a href="invoices.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors bg-blue-50">
+                                View Invoices
+                            </a>
+                            <hr class="my-2">
+                            <button onclick="logout()" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <!-- Navigation -->
-        <div class="flex justify-center mb-8">
-            <a href="index.html" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">
-                Create New Invoice
-            </a>
         </div>
 
         <!-- Invoice List -->
@@ -146,6 +167,21 @@
         
         // Set search URL
         document.getElementById('search-input').setAttribute('hx-get', HANDYMAN_CONFIG.getEndpoint('/api/invoices'));
+        
+        // Hamburger menu functionality
+        const menuButton = document.getElementById('menu-button');
+        const menuDropdown = document.getElementById('menu-dropdown');
+        
+        menuButton.addEventListener('click', function() {
+            menuDropdown.classList.toggle('hidden');
+        });
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!menuButton.contains(event.target) && !menuDropdown.contains(event.target)) {
+                menuDropdown.classList.add('hidden');
+            }
+        });
     </script>
 </body>
 </html> 
