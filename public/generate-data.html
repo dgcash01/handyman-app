@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Dummy Data - Handyman App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="config.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Generate Dummy Data</h1>
+            <p class="text-gray-600">Create a year's worth of realistic data for John the Handyman</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">What this will create:</h2>
+                <ul class="space-y-2 text-gray-600">
+                    <li>• <strong>200-300 invoices</strong> spanning all of 2024</li>
+                    <li>• <strong>100-150 quotes</strong> with various statuses</li>
+                    <li>• <strong>8 realistic clients</strong> with full contact info</li>
+                    <li>• <strong>20 different service types</strong> with realistic pricing</li>
+                    <li>• <strong>Seasonal patterns</strong> (more work in spring/summer)</li>
+                    <li>• <strong>Realistic payment statuses</strong> (70% paid, 30% pending)</li>
+                </ul>
+            </div>
+
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+                <h3 class="font-semibold text-blue-900 mb-2">Login Credentials:</h3>
+                <p class="text-blue-800"><strong>Email:</strong> john@handyman.com</p>
+                <p class="text-blue-800"><strong>Password:</strong> password123</p>
+            </div>
+
+            <div class="flex justify-center">
+                <button id="generate-btn" onclick="startGeneration()" 
+                        class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
+                    🚀 Generate Dummy Data
+                </button>
+            </div>
+
+            <div id="progress" class="mt-6 hidden">
+                <div class="bg-gray-100 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Progress</span>
+                        <span id="progress-text" class="text-sm text-gray-600">Starting...</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progress-bar" class="bg-green-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div id="log" class="mt-4 max-h-64 overflow-y-auto bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm">
+                    <div>Ready to generate data...</div>
+                </div>
+            </div>
+
+            <div id="success" class="mt-6 hidden">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <h3 class="text-lg font-medium text-green-800">Data Generation Complete!</h3>
+                    </div>
+                    <div class="mt-2 text-green-700">
+                        <p>You can now log in with the credentials above and see the dashboard with realistic data.</p>
+                        <div class="mt-4">
+                            <a href="login.html" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                Go to Login
+                                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateProgress(percent, text) {
+            document.getElementById('progress-bar').style.width = percent + '%';
+            document.getElementById('progress-text').textContent = text;
+        }
+
+        async function startGeneration() {
+            const btn = document.getElementById('generate-btn');
+            const progress = document.getElementById('progress');
+            const success = document.getElementById('success');
+            
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            progress.classList.remove('hidden');
+            success.classList.add('hidden');
+            
+            log('🚀 Starting dummy data generation for John...');
+            updateProgress(5, 'Initializing...');
+            
+            try {
+                // Load the dummy data generator script
+                const script = document.createElement('script');
+                script.src = '../create-dummy-data.js';
+                document.head.appendChild(script);
+                
+                script.onload = async () => {
+                    log('📜 Script loaded successfully');
+                    updateProgress(10, 'Script loaded');
+                    
+                    // Wait a moment for the script to initialize
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    log('📊 Starting data generation...');
+                    updateProgress(15, 'Generating data...');
+                    
+                    // Override console.log to capture output
+                    const originalLog = console.log;
+                    console.log = function(...args) {
+                        const message = args.join(' ');
+                        log(message);
+                        originalLog.apply(console, args);
+                    };
+                    
+                    // Run the data generation
+                    if (window.generateDummyData) {
+                        await window.generateDummyData();
+                        updateProgress(100, 'Complete!');
+                        success.classList.remove('hidden');
+                        log('🎉 Data generation completed successfully!');
+                    } else {
+                        throw new Error('Data generation function not found');
+                    }
+                };
+                
+                script.onerror = () => {
+                    throw new Error('Failed to load data generation script');
+                };
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+                btn.disabled = false;
+                btn.textContent = '🚀 Generate Dummy Data';
+            }
+        }
+    </script>
+</body>
+</html> 
