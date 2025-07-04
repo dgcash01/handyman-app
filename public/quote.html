@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Handyman Invoice Generator</title>
+    <title>Create Quote - Handyman App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <script src="https://unpkg.com/uuid@9.0.1/dist/umd/uuidv4.min.js"></script>
     <script src="config.js"></script>
     <style>
         .htmx-indicator {
@@ -19,17 +18,6 @@
         .htmx-request.htmx-indicator {
             opacity: 1;
         }
-        
-        @keyframes hammer-bounce {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            25% { transform: translateY(-8px) rotate(-5deg); }
-            50% { transform: translateY(-12px) rotate(0deg); }
-            75% { transform: translateY(-8px) rotate(5deg); }
-        }
-        
-        .hammer-animation svg {
-            animation: hammer-bounce 1s infinite;
-        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -41,11 +29,14 @@
             </svg>
         </button>
         <div id="mobile-menu" class="hidden absolute top-16 right-4 bg-white rounded-lg shadow-lg w-56 py-2 flex flex-col space-y-1 border border-gray-200">
-            <a href="quick-quote.html" class="block px-6 py-3 text-gray-800 hover:bg-blue-50">Create Quote</a>
+            <a href="index.html" class="block px-6 py-3 text-gray-800 hover:bg-blue-50">Create Invoice</a>
             <a href="quotes.html" class="block px-6 py-3 text-gray-800 hover:bg-blue-50">View Quotes</a>
-            <a href="invoices.html" class="block px-6 py-3 text-gray-800 hover:bg-blue-50">View Invoices</a>
+            <a href="invoices.html" class="block px-6 py-3 text-gray-800 hover:bg-blue-50">Invoice Search</a>
             <a href="profile.html" class="block px-6 py-3 text-gray-800 hover:bg-blue-50">Profile</a>
+            <a href="#" class="block px-6 py-3 text-gray-800 hover:bg-blue-50">Customer Lookup</a>
             <button onclick="logout()" class="block text-left w-full px-6 py-3 text-red-600 hover:bg-red-50">Logout</button>
+            <div class="border-t border-gray-200 my-1"></div>
+            <a href="#" class="block px-6 py-3 text-gray-400 cursor-not-allowed">More coming soon...</a>
         </div>
     </nav>
     <script>
@@ -62,10 +53,30 @@
         }
     });
     </script>
+
     <div class="container mx-auto px-2 py-8 max-w-4xl">
-        <h1 class="text-4xl font-bold text-center text-blue-800 mb-8">Handyman Invoice Generator</h1>
-        <form hx-post="" hx-target="this" hx-swap="outerHTML" hx-indicator="#loading-indicator" id="invoice-form">
-            <!-- Only Client Details Card at the Top -->
+        <h1 class="text-4xl font-bold text-center text-blue-800 mb-8">Create Quote</h1>
+        
+        <form hx-post="" hx-target="this" hx-swap="outerHTML" hx-indicator="#loading-indicator" id="quote-form">
+            <!-- Quote Info Row -->
+            <div class="flex flex-col md:flex-row gap-4 mb-4">
+                <div class="flex-1 bg-white rounded-xl shadow p-4 flex flex-col md:flex-row gap-4 items-center">
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Quote #</label>
+                        <input type="text" id="quoteNumber" name="quoteNumber" class="w-full px-3 py-2 border border-gray-200 rounded bg-gray-100" readonly>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Date</label>
+                        <input type="date" id="quoteDate" name="quoteDate" required class="w-full px-3 py-2 border border-gray-200 rounded">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Valid Until</label>
+                        <input type="date" id="validUntil" name="validUntil" required class="w-full px-3 py-2 border border-gray-200 rounded">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Client Details Card -->
             <div class="flex flex-col md:flex-row gap-4 mb-4">
                 <div class="w-full md:w-1/2 bg-green-50 rounded-xl shadow p-6">
                     <h2 class="text-xl font-bold text-green-700 mb-4">Client Details</h2>
@@ -115,30 +126,71 @@
                     <span class="text-gray-400">(Add logo, instructions, or other content here)</span>
                 </div>
             </div>
-            <!-- Invoice Info Row -->
-            <div class="flex flex-col md:flex-row gap-4 mb-4">
-                <div class="flex-1 bg-white rounded-xl shadow p-4 flex flex-col md:flex-row gap-4 items-center">
-                    <div class="flex-1">
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Invoice #</label>
-                        <input type="text" id="invoiceNumber" name="invoiceNumber" class="w-full px-3 py-2 border border-gray-200 rounded bg-gray-100" readonly>
+
+            <!-- Project Details -->
+            <div class="bg-white rounded-xl shadow p-6 mb-4">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Project Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Project Type</label>
+                        <select id="projectType" name="projectType" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Select Project Type</option>
+                            <option value="repair">Repair</option>
+                            <option value="installation">Installation</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="renovation">Renovation</option>
+                            <option value="emergency">Emergency Service</option>
+                            <option value="other">Other</option>
+                        </select>
                     </div>
-                    <div class="flex-1">
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Date</label>
-                        <input type="date" id="invoiceDate" name="invoiceDate" required class="w-full px-3 py-2 border border-gray-200 rounded">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Priority</label>
+                        <select id="priority" name="priority" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Project Description</label>
+                    <textarea id="projectDescription" name="projectDescription" required rows="4" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Describe the work to be performed, scope of project, and any specific requirements..."></textarea>
+                </div>
+            </div>
+
+            <!-- Scope of Work -->
+            <div class="bg-white rounded-xl shadow p-6 mb-4">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Scope of Work</h2>
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="siteVisit" name="scopeItems[]" value="siteVisit" class="mt-1">
+                        <label for="siteVisit" class="text-sm">Site visit and assessment</label>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="materials" name="scopeItems[]" value="materials" class="mt-1">
+                        <label for="materials" class="text-sm">Materials and supplies</label>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="labor" name="scopeItems[]" value="labor" class="mt-1">
+                        <label for="labor" class="text-sm">Labor and installation</label>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="cleanup" name="scopeItems[]" value="cleanup" class="mt-1">
+                        <label for="cleanup" class="text-sm">Cleanup and disposal</label>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="warranty" name="scopeItems[]" value="warranty" class="mt-1">
+                        <label for="warranty" class="text-sm">Warranty coverage</label>
                     </div>
                 </div>
             </div>
-            <!-- Service Description -->
+
+            <!-- Materials & Labor Estimate -->
             <div class="bg-white rounded-xl shadow p-6 mb-4">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">Service Description</h2>
-                <textarea id="serviceDescription" name="serviceDescription" required rows="3" 
-                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Describe the work performed or service provided..."></textarea>
-            </div>
-            
-            <!-- Services & Materials Table -->
-            <div class="bg-white rounded-xl shadow p-6 mb-4">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">Materials & Supplies</h2>
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Materials & Labor Estimate</h2>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm">
                         <thead>
@@ -157,42 +209,73 @@
                 </div>
                 <button type="button" onclick="addMaterialRow()" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow text-sm font-semibold transition-colors">+ Add Item</button>
             </div>
-            <!-- Notes & Summary -->
-            <div class="flex flex-col md:flex-row gap-4 mb-4">
-                <div class="flex-1 bg-yellow-50 rounded-xl shadow p-6">
-                    <h2 class="text-lg font-bold text-yellow-700 mb-2">Notes</h2>
-                    <textarea id="notes" name="notes" rows="4" class="w-full px-3 py-2 border border-yellow-200 rounded" placeholder="Thank you for your business!"></textarea>
-                </div>
-                <div class="flex-1 bg-purple-50 rounded-xl shadow p-6">
-                    <h2 class="text-lg font-bold text-purple-700 mb-2">Summary</h2>
-                    <div class="flex flex-col gap-2">
-                        <div class="flex justify-between">
-                            <span>Subtotal:</span>
-                            <span id="subtotal">$0.00</span>
-                        </div>
-                        <div class="border-t border-purple-200 my-2"></div>
-                        <div class="flex justify-between text-xl font-bold">
-                            <span>GRAND TOTAL:</span>
-                            <span id="grandTotal" class="text-blue-700">$0.00</span>
-                        </div>
+
+            <!-- Terms & Conditions -->
+            <div class="bg-white rounded-xl shadow p-6 mb-4">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Terms & Conditions</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Payment Terms</label>
+                        <select id="paymentTerms" name="paymentTerms" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="net30">Net 30</option>
+                            <option value="net15">Net 15</option>
+                            <option value="dueOnCompletion" selected>Due on Completion</option>
+                            <option value="50percentUpfront">50% Upfront, 50% on Completion</option>
+                            <option value="custom">Custom Terms</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Additional Terms</label>
+                        <textarea id="additionalTerms" name="additionalTerms" rows="3" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Any additional terms, conditions, or special requirements..."></textarea>
                     </div>
                 </div>
             </div>
-            <!-- Hidden fields for backend -->
-            <input type="hidden" id="amount" name="amount" value="0">
-            <input type="hidden" name="paymentStatus" value="pending">
-            
-            <!-- Print/Save Button -->
-            <div class="flex justify-center mt-6">
-                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-lg font-bold px-10 py-3 rounded-lg shadow-lg transition-colors">Save Invoice</button>
+
+            <!-- Summary -->
+            <div class="bg-purple-50 rounded-xl shadow p-6 mb-4">
+                <h2 class="text-lg font-bold text-purple-700 mb-2">Quote Summary</h2>
+                <div class="flex flex-col gap-2">
+                    <div class="flex justify-between">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$0.00</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Tax (if applicable):</span>
+                        <span id="tax">$0.00</span>
+                    </div>
+                    <div class="border-t border-purple-200 my-2"></div>
+                    <div class="flex justify-between text-xl font-bold">
+                        <span>TOTAL ESTIMATE:</span>
+                        <span id="grandTotal" class="text-blue-700">$0.00</span>
+                    </div>
+                </div>
             </div>
+
+            <!-- Hidden amount field for backend -->
+            <input type="hidden" id="amount" name="amount" value="0">
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-lg font-bold px-8 py-3 rounded-lg shadow-lg transition-colors">
+                    Save Quote
+                </button>
+                <button type="button" onclick="saveAsDraft()" class="bg-gray-600 hover:bg-gray-700 text-white text-lg font-bold px-8 py-3 rounded-lg shadow-lg transition-colors">
+                    Save as Draft
+                </button>
+                <button type="button" onclick="window.location.href='index.html'" class="bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold px-8 py-3 rounded-lg shadow-lg transition-colors">
+                    Convert to Invoice
+                </button>
+            </div>
+
             <!-- Loading Indicator -->
             <div id="loading-indicator" class="htmx-indicator flex items-center space-x-2 text-green-600 mt-4 justify-center">
                 <svg class="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                 </svg>
-                <span class="text-sm font-medium">Creating invoice...</span>
+                <span class="text-sm font-medium">Creating quote...</span>
             </div>
         </form>
     </div>
@@ -227,47 +310,63 @@
         document.addEventListener('DOMContentLoaded', function() {
             checkAuth();
             
-            // ZIP code auto-fill functionality
-            const zipInput = document.getElementById('clientZip');
-            const cityInput = document.getElementById('clientCity');
-            const stateSelect = document.getElementById('clientState');
+            // Set default dates
+            const today = new Date();
+            const validUntil = new Date();
+            validUntil.setDate(today.getDate() + 30); // 30 days from today
             
-            if (zipInput) {
-                zipInput.addEventListener('blur', function() {
-                    const zipCode = this.value.trim();
-                    if (zipCode.length === 5) {
-                        // You can integrate with a ZIP code API here
-                        // For now, we'll just show a placeholder for the functionality
-                        console.log('ZIP code entered:', zipCode);
-                        // Example: fetchCityState(zipCode);
+            const quoteDateInput = document.getElementById('quoteDate');
+            const validUntilInput = document.getElementById('validUntil');
+            
+            if (quoteDateInput) {
+                quoteDateInput.valueAsDate = today;
+            }
+            if (validUntilInput) {
+                validUntilInput.valueAsDate = validUntil;
+            }
+            
+            // Generate quote number
+            generateQuoteNumber();
+        });
+        
+        async function generateQuoteNumber() {
+            try {
+                const endpoint = (typeof HANDYMAN_CONFIG !== 'undefined' && HANDYMAN_CONFIG.getEndpoint) 
+                    ? HANDYMAN_CONFIG.getEndpoint('/api/quotes/count')
+                    : 'https://handyman-invoice-worker.dangcashion.workers.dev/api/quotes/count';
+                
+                const response = await fetch(endpoint, {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
                     }
                 });
-            }
-            
-            // Function to fetch city and state from ZIP code (placeholder)
-            async function fetchCityState(zipCode) {
-                try {
-                    // This would be replaced with an actual ZIP code API
-                    // Example: const response = await fetch(`https://api.zippopotam.us/us/${zipCode}`);
-                    // const data = await response.json();
-                    // if (cityInput) cityInput.value = data.places[0]['place name'];
-                    // if (stateSelect) stateSelect.value = data.places[0]['state abbreviation'];
-                    console.log('Would fetch city/state for ZIP:', zipCode);
-                } catch (error) {
-                    console.error('Error fetching ZIP code data:', error);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const year = new Date().getFullYear();
+                    const sequence = data.count + 1;
+                    const quoteNumberInput = document.getElementById('quoteNumber');
+                    if (quoteNumberInput) {
+                        quoteNumberInput.value = `QT-${year}-${String(sequence).padStart(4, '0')}`;
+                    }
+                } else {
+                    // Fallback to sequence 1 if API fails
+                    const year = new Date().getFullYear();
+                    const quoteNumberInput = document.getElementById('quoteNumber');
+                    if (quoteNumberInput) {
+                        quoteNumberInput.value = `QT-${year}-0001`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error generating quote number:', error);
+                // Fallback to sequence 1 if API fails
+                const year = new Date().getFullYear();
+                const quoteNumberInput = document.getElementById('quoteNumber');
+                if (quoteNumberInput) {
+                    quoteNumberInput.value = `QT-${year}-0001`;
                 }
             }
-            
-            // Dynamically generate invoice number in format INV-YYYY-0001
-            const now = new Date();
-            const year = now.getFullYear();
-            // For demo, just use 1 as the sequence. In production, fetch the next available number from backend.
-            const sequence = 1;
-            const invoiceNumberInput = document.getElementById('invoiceNumber');
-            if (invoiceNumberInput) {
-                invoiceNumberInput.value = `INV-${year}-${String(sequence).padStart(4, '0')}`;
-            }
-        });
+        }
         
         function logout() {
             const sessionToken = localStorage.getItem('sessionToken');
@@ -275,7 +374,11 @@
                 const formData = new FormData();
                 formData.append('sessionToken', sessionToken);
                 
-                fetch(HANDYMAN_CONFIG.getEndpoint('/auth/logout'), {
+                const endpoint = (typeof HANDYMAN_CONFIG !== 'undefined' && HANDYMAN_CONFIG.getEndpoint) 
+                    ? HANDYMAN_CONFIG.getEndpoint('/auth/logout')
+                    : 'https://handyman-invoice-worker.dangcashion.workers.dev/auth/logout';
+                
+                fetch(endpoint, {
                     method: 'POST',
                     body: formData
                 }).finally(() => {
@@ -289,66 +392,37 @@
             }
         }
         
-        // Set default date to today
-        const invoiceDateInput = document.getElementById('invoiceDate');
-        if (invoiceDateInput) {
-            invoiceDateInput.valueAsDate = new Date();
-        }
-        
         // Set form action URL
-        const invoiceForm = document.getElementById('invoice-form');
-        if (invoiceForm) {
+        const quoteForm = document.getElementById('quote-form');
+        if (quoteForm) {
             const endpoint = (typeof HANDYMAN_CONFIG !== 'undefined' && HANDYMAN_CONFIG.getEndpoint) 
-                ? HANDYMAN_CONFIG.getEndpoint('/submit-invoice')
-                : 'https://handyman-invoice-worker.dangcashion.workers.dev/submit-invoice';
-            invoiceForm.setAttribute('hx-post', endpoint);
+                ? HANDYMAN_CONFIG.getEndpoint('/submit-quote')
+                : 'https://handyman-invoice-worker.dangcashion.workers.dev/submit-quote';
+            quoteForm.setAttribute('hx-post', endpoint);
         }
         
-        // HTMX error handling
+        // Debug HTMX (with error handling)
         document.body.addEventListener('htmx:beforeRequest', function(evt) {
-            // Suppress console logs in production
-            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-                return;
-            }
             try {
                 console.log('HTMX Request starting:', evt.detail);
             } catch (error) {
-                // Silently handle errors
+                console.warn('Error in HTMX beforeRequest:', error);
             }
         });
         
         document.body.addEventListener('htmx:afterRequest', function(evt) {
-            // Suppress console logs in production
-            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-                return;
-            }
             try {
                 console.log('HTMX Request completed:', evt.detail);
             } catch (error) {
-                // Silently handle errors
+                console.warn('Error in HTMX afterRequest:', error);
             }
         });
         
         document.body.addEventListener('htmx:responseError', function(evt) {
             try {
                 console.error('HTMX Error:', evt.detail);
-                // Show user-friendly error message
-                const errorMessage = document.createElement('div');
-                errorMessage.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4';
-                errorMessage.innerHTML = '<strong>Error:</strong> Failed to save invoice. Please try again.';
-                
-                const form = document.getElementById('invoice-form');
-                if (form) {
-                    form.insertBefore(errorMessage, form.firstChild);
-                    // Remove error message after 5 seconds
-                    setTimeout(() => {
-                        if (errorMessage.parentNode) {
-                            errorMessage.parentNode.removeChild(errorMessage);
-                        }
-                    }, 5000);
-                }
             } catch (error) {
-                // Silently handle errors
+                console.warn('Error in HTMX responseError:', error);
             }
         });
         
@@ -423,7 +497,7 @@
             // Update summary
             const subtotalSpan = document.getElementById('subtotal');
             if (subtotalSpan) subtotalSpan.textContent = `$${subtotal.toFixed(2)}`;
-            // Grand total (no tax)
+            // Grand total (no tax for quotes)
             const grandTotalSpan = document.getElementById('grandTotal');
             if (grandTotalSpan) grandTotalSpan.textContent = `$${subtotal.toFixed(2)}`;
             
@@ -466,6 +540,19 @@
             const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
             
             window.open(mapsUrl, '_blank');
+        }
+        
+        // Save as draft function
+        function saveAsDraft() {
+            // Add a hidden field to indicate this is a draft
+            const draftField = document.createElement('input');
+            draftField.type = 'hidden';
+            draftField.name = 'isDraft';
+            draftField.value = 'true';
+            document.getElementById('quote-form').appendChild(draftField);
+            
+            // Submit the form
+            document.getElementById('quote-form').submit();
         }
         
         // Initialize with one material row

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Test</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-md mx-auto">
+        <h1 class="text-2xl font-bold mb-4">Worker Test</h1>
+        
+        <!-- Test Worker Connection -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Test Worker Connection</h2>
+            <button hx-get="https://handyman-invoice-worker.your-subdomain.workers.dev/test" hx-target="#test-result" class="bg-blue-500 text-white px-4 py-2 rounded">
+                Test Worker
+            </button>
+            <div id="test-result" class="mt-2 p-2 bg-gray-100 rounded"></div>
+        </div>
+        
+        <!-- Simple Form Test -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Simple Form Test</h2>
+            <form hx-post="https://handyman-invoice-worker.your-subdomain.workers.dev/submit-invoice" hx-target="#form-result">
+                <div class="mb-2">
+                    <label class="block text-sm">Your Email:</label>
+                    <input type="email" name="senderEmail" value="test@example.com" required class="w-full border p-2 rounded">
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm">Client Name:</label>
+                    <input type="text" name="clientName" value="Test Client" required class="w-full border p-2 rounded">
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm">Client Email:</label>
+                    <input type="email" name="clientEmail" value="client@example.com" required class="w-full border p-2 rounded">
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm">Service:</label>
+                    <textarea name="serviceDescription" required class="w-full border p-2 rounded">Test service</textarea>
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm">Amount:</label>
+                    <input type="number" name="amount" value="100" step="0.01" required class="w-full border p-2 rounded">
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm">Date:</label>
+                    <input type="date" name="invoiceDate" value="2024-01-15" required class="w-full border p-2 rounded">
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm">Status:</label>
+                    <select name="paymentStatus" required class="w-full border p-2 rounded">
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                    </select>
+                </div>
+                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Submit Test</button>
+            </form>
+            <div id="form-result" class="mt-2 p-2 bg-gray-100 rounded min-h-[100px]"></div>
+        </div>
+        
+        <!-- Debug Info -->
+        <div class="text-sm text-gray-600">
+            <p>Check browser console for HTMX debug info</p>
+        </div>
+    </div>
+    
+    <script>
+        // Debug HTMX
+        document.body.addEventListener('htmx:beforeRequest', function(evt) {
+            console.log('HTMX Request starting:', evt.detail);
+        });
+        
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+            console.log('HTMX Request completed:', evt.detail);
+        });
+        
+        document.body.addEventListener('htmx:responseError', function(evt) {
+            console.error('HTMX Error:', evt.detail);
+        });
+    </script>
+</body>
+</html> 

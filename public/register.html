@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Handyman Invoice System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="config.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full space-y-8">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Create Account</h1>
+            <p class="text-gray-600">Join our handyman invoice system</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <form hx-post="" hx-target="#register-response" hx-swap="outerHTML" id="register-form">
+                <div id="register-message" class="mb-4 text-center text-sm"></div>
+                <div class="space-y-6">
+                    <div>
+                        <label for="businessName" class="block text-sm font-medium text-gray-700 mb-1">
+                            Business Name
+                        </label>
+                        <input type="text" id="businessName" name="businessName" required autofocus
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Your Handyman Business">
+                    </div>
+                    <div>
+                        <label for="businessStreet" class="block text-sm font-medium text-gray-700 mb-1">
+                            Business Street Address
+                        </label>
+                        <input type="text" id="businessStreet" name="businessStreet" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="123 Main St">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label for="businessCity" class="block text-sm font-medium text-gray-700 mb-1">
+                                City
+                            </label>
+                            <input type="text" id="businessCity" name="businessCity" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Anytown">
+                        </div>
+                        <div>
+                            <label for="businessState" class="block text-sm font-medium text-gray-700 mb-1">
+                                State
+                            </label>
+                            <select id="businessState" name="businessState" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Select State</option>
+                                <option value="AL">Alabama</option>
+                                <option value="AK">Alaska</option>
+                                <option value="AZ">Arizona</option>
+                                <option value="AR">Arkansas</option>
+                                <option value="CA">California</option>
+                                <option value="CO">Colorado</option>
+                                <option value="CT">Connecticut</option>
+                                <option value="DE">Delaware</option>
+                                <option value="FL">Florida</option>
+                                <option value="GA">Georgia</option>
+                                <option value="HI">Hawaii</option>
+                                <option value="ID">Idaho</option>
+                                <option value="IL">Illinois</option>
+                                <option value="IN">Indiana</option>
+                                <option value="IA">Iowa</option>
+                                <option value="KS">Kansas</option>
+                                <option value="KY">Kentucky</option>
+                                <option value="LA">Louisiana</option>
+                                <option value="ME">Maine</option>
+                                <option value="MD">Maryland</option>
+                                <option value="MA">Massachusetts</option>
+                                <option value="MI">Michigan</option>
+                                <option value="MN">Minnesota</option>
+                                <option value="MS">Mississippi</option>
+                                <option value="MO">Missouri</option>
+                                <option value="MT">Montana</option>
+                                <option value="NE">Nebraska</option>
+                                <option value="NV">Nevada</option>
+                                <option value="NH">New Hampshire</option>
+                                <option value="NJ">New Jersey</option>
+                                <option value="NM">New Mexico</option>
+                                <option value="NY">New York</option>
+                                <option value="NC">North Carolina</option>
+                                <option value="ND">North Dakota</option>
+                                <option value="OH">Ohio</option>
+                                <option value="OK">Oklahoma</option>
+                                <option value="OR">Oregon</option>
+                                <option value="PA">Pennsylvania</option>
+                                <option value="RI">Rhode Island</option>
+                                <option value="SC">South Carolina</option>
+                                <option value="SD">South Dakota</option>
+                                <option value="TN">Tennessee</option>
+                                <option value="TX">Texas</option>
+                                <option value="UT">Utah</option>
+                                <option value="VT">Vermont</option>
+                                <option value="VA">Virginia</option>
+                                <option value="WA">Washington</option>
+                                <option value="WV">West Virginia</option>
+                                <option value="WI">Wisconsin</option>
+                                <option value="WY">Wyoming</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="businessZip" class="block text-sm font-medium text-gray-700 mb-1">
+                                ZIP Code
+                            </label>
+                            <input type="text" id="businessZip" name="businessZip" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="12345">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="businessPhone" class="block text-sm font-medium text-gray-700 mb-1">
+                            Business Phone
+                        </label>
+                        <input type="text" id="businessPhone" name="businessPhone" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="555-123-4567">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                            Email Address
+                        </label>
+                        <input type="email" id="email" name="email" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="your-email@example.com">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                            Password
+                        </label>
+                        <input type="password" id="password" name="password" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Create a strong password">
+                    </div>
+                    <div>
+                        <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">
+                            Confirm Password
+                        </label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Confirm your password">
+                    </div>
+                    <div>
+                        <button type="submit" 
+                            class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg shadow font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                            Create Account
+                        </button>
+                    </div>
+                </div>
+                <div id="register-loading" class="hidden mt-4 text-center text-blue-600">Creating account...</div>
+            </form>
+            <div id="register-response" class="mt-4"></div>
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    Already have an account? 
+                    <a href="login.html" class="text-blue-600 hover:text-blue-800 font-medium">
+                        Sign in here
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set form action URL
+        const registerForm = document.getElementById('register-form');
+        registerForm.setAttribute('hx-post', HANDYMAN_CONFIG.getEndpoint('/auth/register'));
+        
+        // Password confirmation validation
+        registerForm.addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                document.getElementById('register-message').textContent = 'Passwords do not match!';
+                document.getElementById('register-message').className = 'mb-4 text-center text-sm text-red-600';
+                return false;
+            }
+            document.getElementById('register-loading').classList.remove('hidden');
+        });
+        
+        // Debug HTMX
+        document.body.addEventListener('htmx:beforeRequest', function(evt) {
+            console.log('HTMX Request starting:', evt.detail);
+        });
+        
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+            console.log('HTMX Request completed:', evt.detail);
+            document.getElementById('register-loading').classList.add('hidden');
+        });
+        
+        document.body.addEventListener('htmx:responseError', function(evt) {
+            console.error('HTMX Error:', evt.detail);
+            document.getElementById('register-loading').classList.add('hidden');
+        });
+    </script>
+</body>
+</html> 

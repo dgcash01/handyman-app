@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Quotes - Handyman App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="config.js"></script>
+    <style>
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-draft { background-color: #f3f4f6; color: #6b7280; }
+        .status-sent { background-color: #e0e7ff; color: #3730a3; }
+        .status-pending { background-color: #fef3c7; color: #d97706; }
+        .status-accepted { background-color: #d1fae5; color: #059669; }
+        .status-rejected { background-color: #fee2e2; color: #dc2626; }
+        .status-converted { background-color: #dbeafe; color: #2563eb; }
+        .status-expired { background-color: #f3e8ff; color: #7c3aed; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Hamburger Menu Navigation -->
+    <nav class="w-full flex justify-end items-center px-4 py-3 bg-white shadow-md relative z-20">
+        <button id="hamburger-btn" class="block focus:outline-none" aria-label="Open menu">
+            <svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+        <div id="mobile-menu" class="hidden absolute top-16 right-4 bg-white rounded-lg shadow-lg w-56 py-2 flex flex-col space-y-1 border border-gray-200">
+            <a href="index.html" class="block px-6 py-3 text-gray-800 hover:bg-blue-50">Create Invoice</a>
+            <a href="quote.html" class="block px-6 py-3 text-gray-800 hover:bg-blue-50">Create Quote</a>
+            <a href="quotes.html" class="block px-6 py-3 text-gray-800 hover:bg-blue-50 bg-blue-50">View Quotes</a>
+            <a href="invoices.html" class="block px-6 py-3 text-gray-800 hover:bg-blue-50">Invoice Search</a>
+            <a href="profile.html" class="block px-6 py-3 text-gray-800 hover:bg-blue-50">Profile</a>
+            <a href="#" class="block px-6 py-3 text-gray-800 hover:bg-blue-50">Customer Lookup</a>
+            <button onclick="logout()" class="block text-left w-full px-6 py-3 text-red-600 hover:bg-red-50">Logout</button>
+            <div class="border-t border-gray-200 my-1"></div>
+            <a href="#" class="block px-6 py-3 text-gray-400 cursor-not-allowed">More coming soon...</a>
+        </div>
+    </nav>
+    <script>
+    // Hamburger menu toggle
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    hamburgerBtn.addEventListener('click', function() {
+        mobileMenu.classList.toggle('hidden');
+    });
+    // Optional: close menu when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!hamburgerBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
+            mobileMenu.classList.add('hidden');
+        }
+    });
+    </script>
+
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-blue-800 mb-2">Your Quotes</h1>
+                <p class="text-gray-600">Manage quotes and convert to invoices after work completion</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button onclick="window.location.href='quick-quote.html'" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors font-semibold">
+                    + Create Quote
+                </button>
+                <button onclick="refreshQuotes()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors font-semibold">
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="bg-white rounded-xl shadow p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Search Quotes</label>
+                    <input type="text" id="searchInput" placeholder="Search by client name, quote number..." 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Status Filter</label>
+                    <select id="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Statuses</option>
+                        <option value="draft">Draft</option>
+                        <option value="sent">Sent</option>
+                        <option value="pending">Pending</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="converted">Converted</option>
+                        <option value="expired">Expired</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Date Range</label>
+                    <select id="dateFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="quarter">This Quarter</option>
+                        <option value="year">This Year</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quotes List -->
+        <div id="quotesContainer" class="space-y-4">
+            <!-- Quotes will be loaded here -->
+            <div class="flex justify-center items-center py-12">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p class="text-gray-600">Loading quotes...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- No Quotes Message -->
+        <div id="noQuotesMessage" class="hidden text-center py-12">
+            <div class="max-w-md mx-auto">
+                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">No quotes found</h3>
+                <p class="text-gray-600 mb-6">Get started by creating your first quote for a client.</p>
+                <button onclick="window.location.href='quick-quote.html'" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors font-semibold">
+                    Create Your First Quote
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set up Authorization header
+        const sessionToken = localStorage.getItem('sessionToken');
+        const userEmail = localStorage.getItem('userEmail');
+        const businessName = localStorage.getItem('businessName');
+        
+        // Check authentication on page load
+        function checkAuth() {
+            if (!sessionToken || !userEmail) {
+                window.location.href = 'login.html';
+                return;
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadQuotes();
+            
+            // Add event listeners for search and filters
+            document.getElementById('searchInput').addEventListener('input', filterQuotes);
+            document.getElementById('statusFilter').addEventListener('change', filterQuotes);
+            document.getElementById('dateFilter').addEventListener('change', filterQuotes);
+        });
+        
+        function logout() {
+            const sessionToken = localStorage.getItem('sessionToken');
+            if (sessionToken) {
+                const formData = new FormData();
+                formData.append('sessionToken', sessionToken);
+                
+                const endpoint = (typeof HANDYMAN_CONFIG !== 'undefined' && HANDYMAN_CONFIG.getEndpoint) 
+                    ? HANDYMAN_CONFIG.getEndpoint('/auth/logout')
+                    : 'https://handyman-invoice-worker.dangcashion.workers.dev/auth/logout';
+                
+                fetch(endpoint, {
+                    method: 'POST',
+                    body: formData
+                }).finally(() => {
+                    localStorage.removeItem('sessionToken');
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('businessName');
+                    window.location.href = 'login.html';
+                });
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+        
+        let allQuotes = [];
+        
+        async function loadQuotes() {
+            try {
+                const endpoint = (typeof HANDYMAN_CONFIG !== 'undefined' && HANDYMAN_CONFIG.getEndpoint) 
+                    ? HANDYMAN_CONFIG.getEndpoint('/api/quotes')
+                    : 'https://handyman-invoice-worker.dangcashion.workers.dev/api/quotes';
+                
+                const response = await fetch(endpoint, {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load quotes');
+                }
+                
+                allQuotes = await response.json();
+                displayQuotes(allQuotes);
+                
+            } catch (error) {
+                console.error('Error loading quotes:', error);
+                document.getElementById('quotesContainer').innerHTML = `
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                        Failed to load quotes. Please try again.
+                    </div>
+                `;
+            }
+        }
+        
+        function displayQuotes(quotes) {
+            const container = document.getElementById('quotesContainer');
+            const noQuotesMessage = document.getElementById('noQuotesMessage');
+            
+            if (quotes.length === 0) {
+                container.classList.add('hidden');
+                noQuotesMessage.classList.remove('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            noQuotesMessage.classList.add('hidden');
+            
+            container.innerHTML = quotes.map(quote => `
+                <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                        <div class="flex-1">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+                                <h3 class="text-xl font-bold text-gray-900">${quote.quoteNumber}</h3>
+                                <span class="status-badge status-${quote.status}">${quote.status}</span>
+                                ${isQuoteExpired(quote.validUntil) ? '<span class="status-badge status-expired">Expired</span>' : ''}
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                    <span class="font-semibold text-gray-600">Client:</span>
+                                    <p class="text-gray-900">${quote.clientName}</p>
+                                </div>
+                                <div>
+                                    <span class="font-semibold text-gray-600">Project:</span>
+                                    <p class="text-gray-900">${quote.projectType}</p>
+                                </div>
+                                <div>
+                                    <span class="font-semibold text-gray-600">Amount:</span>
+                                    <p class="text-gray-900 font-semibold">$${quote.amount.toFixed(2)}</p>
+                                </div>
+                                <div>
+                                    <span class="font-semibold text-gray-600">Valid Until:</span>
+                                    <p class="text-gray-900">${formatDate(quote.validUntil)}</p>
+                                </div>
+                            </div>
+                            ${quote.projectDescription ? `
+                                <div class="mt-3">
+                                    <span class="font-semibold text-gray-600">Description:</span>
+                                    <p class="text-gray-900 text-sm mt-1">${quote.projectDescription.substring(0, 100)}${quote.projectDescription.length > 100 ? '...' : ''}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <button onclick="viewQuote('${quote.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                                View
+                            </button>
+                            ${quote.status === 'draft' ? `
+                                <button onclick="emailQuote('${quote.id}')" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                                    Email Quote
+                                </button>
+                            ` : ''}
+                            ${quote.status === 'accepted' ? `
+                                <button onclick="convertToInvoice('${quote.id}')" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors border-2 border-green-800">
+                                    ✅ Convert to Invoice
+                                </button>
+                            ` : ''}
+                            ${quote.status === 'pending' ? `
+                                <button onclick="convertToInvoice('${quote.id}')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                                    Convert to Invoice
+                                </button>
+                            ` : ''}
+                            ${quote.status === 'draft' ? `
+                                <button onclick="editQuote('${quote.id}')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                                    Edit
+                                </button>
+                            ` : ''}
+                            <button onclick="downloadPDF('${quote.id}')" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                                PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function filterQuotes() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            
+            let filteredQuotes = allQuotes.filter(quote => {
+                // Search filter
+                const matchesSearch = !searchTerm || 
+                    quote.clientName.toLowerCase().includes(searchTerm) ||
+                    quote.quoteNumber.toLowerCase().includes(searchTerm) ||
+                    quote.projectDescription.toLowerCase().includes(searchTerm);
+                
+                // Status filter
+                const matchesStatus = !statusFilter || quote.status === statusFilter;
+                
+                // Date filter
+                const matchesDate = !dateFilter || filterByDate(quote.createdAt, dateFilter);
+                
+                return matchesSearch && matchesStatus && matchesDate;
+            });
+            
+            displayQuotes(filteredQuotes);
+        }
+        
+        function filterByDate(createdAt, filter) {
+            const date = new Date(createdAt);
+            const now = new Date();
+            
+            switch (filter) {
+                case 'today':
+                    return date.toDateString() === now.toDateString();
+                case 'week':
+                    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    return date >= weekAgo;
+                case 'month':
+                    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+                case 'quarter':
+                    const quarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+                    return date >= quarterStart;
+                case 'year':
+                    return date.getFullYear() === now.getFullYear();
+                default:
+                    return true;
+            }
+        }
+        
+        function isQuoteExpired(validUntil) {
+            return new Date(validUntil) < new Date();
+        }
+        
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString();
+        }
+        
+        function viewQuote(quoteId) {
+            // For now, just download the PDF
+            downloadPDF(quoteId);
+        }
+        
+        function editQuote(quoteId) {
+            // TODO: Implement quote editing
+            alert('Quote editing will be implemented soon!');
+        }
+        
+        async function convertToInvoice(quoteId) {
+            if (!confirm('Are you sure you want to convert this quote to an invoice?')) {
+                return;
+            }
+            
+            try {
+                const endpoint = (typeof HANDYMAN_CONFIG !== 'undefined' && HANDYMAN_CONFIG.getEndpoint) 
+                    ? HANDYMAN_CONFIG.getEndpoint(`/api/quotes/${quoteId}/convert`)
+                    : `https://handyman-invoice-worker.dangcashion.workers.dev/api/quotes/${quoteId}/convert`;
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to convert quote');
+                }
+                
+                const result = await response.json();
+                
+                alert(`Quote successfully converted to invoice ${result.invoiceNumber}!`);
+                window.location.href = 'invoices.html';
+                
+            } catch (error) {
+                console.error('Error converting quote:', error);
+                alert('Failed to convert quote to invoice. Please try again.');
+            }
+        }
+        
+        async function downloadPDF(quoteId) {
+            try {
+                const endpoint = (typeof HANDYMAN_CONFIG !== 'undefined' && HANDYMAN_CONFIG.getEndpoint) 
+                    ? HANDYMAN_CONFIG.getEndpoint(`/api/quotes/${quoteId}/pdf`)
+                    : `https://handyman-invoice-worker.dangcashion.workers.dev/api/quotes/${quoteId}/pdf`;
+                
+                const response = await fetch(endpoint, {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to generate PDF');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `quote-${quoteId}.html`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+            } catch (error) {
+                console.error('Error downloading PDF:', error);
+                alert('Failed to download PDF. Please try again.');
+            }
+        }
+        
+        async function emailQuote(quoteId) {
+            if (!confirm('Send this quote to the client via email?')) {
+                return;
+            }
+            
+            try {
+                const endpoint = (typeof HANDYMAN_CONFIG !== 'undefined' && HANDYMAN_CONFIG.getEndpoint) 
+                    ? HANDYMAN_CONFIG.getEndpoint(`/api/quotes/${quoteId}/email`)
+                    : `https://handyman-invoice-worker.dangcashion.workers.dev/api/quotes/${quoteId}/email`;
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to send quote email');
+                }
+                
+                alert('Quote sent successfully! Check your email for a copy.');
+                refreshQuotes(); // Refresh to update status
+                
+            } catch (error) {
+                console.error('Error sending quote email:', error);
+                alert('Failed to send quote email. Please try again.');
+            }
+        }
+        
+        function refreshQuotes() {
+            loadQuotes();
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test - Handyman Invoice System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="config.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full space-y-8">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Authentication Test</h1>
+            <p class="text-gray-600">Test the authentication system</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <div class="space-y-4">
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-2">Current Status:</h3>
+                    <div id="auth-status" class="text-sm text-gray-600">Checking...</div>
+                </div>
+                
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-2">User Info:</h3>
+                    <div id="user-info" class="text-sm text-gray-600">Loading...</div>
+                </div>
+                
+                <div class="flex gap-4">
+                    <a href="login.html" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-center transition-colors">
+                        Login
+                    </a>
+                    <a href="register.html" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-center transition-colors">
+                        Register
+                    </a>
+                </div>
+                
+                <div class="flex gap-4">
+                    <a href="index.html" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md text-center transition-colors">
+                        Create Invoice
+                    </a>
+                    <a href="invoices.html" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-md text-center transition-colors">
+                        View Invoices
+                    </a>
+                </div>
+                
+                <button onclick="testLogout()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition-colors">
+                    Test Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+        });
+        
+        function checkAuthStatus() {
+            const sessionToken = localStorage.getItem('sessionToken');
+            const userEmail = localStorage.getItem('userEmail');
+            const businessName = localStorage.getItem('businessName');
+            
+            const authStatus = document.getElementById('auth-status');
+            const userInfo = document.getElementById('user-info');
+            
+            if (sessionToken && userEmail) {
+                authStatus.innerHTML = '<span class="text-green-600">✓ Authenticated</span>';
+                userInfo.innerHTML = `
+                    <strong>Business:</strong> ${businessName}<br>
+                    <strong>Email:</strong> ${userEmail}<br>
+                    <strong>Token:</strong> ${sessionToken.substring(0, 20)}...
+                `;
+            } else {
+                authStatus.innerHTML = '<span class="text-red-600">✗ Not authenticated</span>';
+                userInfo.innerHTML = 'No user information found';
+            }
+        }
+        
+        function testLogout() {
+            const sessionToken = localStorage.getItem('sessionToken');
+            if (sessionToken) {
+                const formData = new FormData();
+                formData.append('sessionToken', sessionToken);
+                
+                fetch(HANDYMAN_CONFIG.getEndpoint('/auth/logout'), {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    console.log('Logout response:', response);
+                    localStorage.removeItem('sessionToken');
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('businessName');
+                    checkAuthStatus();
+                }).catch(error => {
+                    console.error('Logout error:', error);
+                    localStorage.removeItem('sessionToken');
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('businessName');
+                    checkAuthStatus();
+                });
+            } else {
+                alert('No session token found');
+            }
+        }
+    </script>
+</body>
+</html> 

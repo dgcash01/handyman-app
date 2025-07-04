@@ -6,13 +6,22 @@
     <title>Invoice List - Handyman App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="config.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div class="container mx-auto px-4 py-8 max-w-6xl">
         <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-900 mb-2">Invoice Management</h1>
-            <p class="text-gray-600">View and manage all your invoices</p>
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-900 mb-2">Invoice Management</h1>
+                <p class="text-gray-600">View and manage all your invoices</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-600" id="user-info"></span>
+                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
+                    Logout
+                </button>
+            </div>
         </div>
 
         <!-- Navigation -->
@@ -26,14 +35,27 @@
         <div class="bg-white rounded-lg shadow-lg p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-semibold text-gray-900">All Invoices</h2>
-                <button hx-get="/api/invoices" hx-target="#invoice-list" hx-swap="innerHTML"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
-                    Refresh
-                </button>
+                <div class="flex items-center gap-4">
+                    <!-- Search Box -->
+                    <div class="relative">
+                        <input type="text" id="search-input" placeholder="Search invoices..." 
+                               class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               hx-get="" hx-target="#invoice-list" hx-trigger="keyup changed delay:500ms" hx-swap="innerHTML">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <button hx-get="" hx-target="#invoice-list" hx-swap="innerHTML"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors" id="refresh-button">
+                        Refresh
+                    </button>
+                </div>
             </div>
 
             <!-- Loading State -->
-            <div id="invoice-list" hx-get="/api/invoices" hx-trigger="load" hx-swap="innerHTML">
+            <div id="invoice-list" hx-get="" hx-trigger="load" hx-swap="innerHTML">
                 <div class="flex justify-center items-center py-12">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                     <span class="ml-3 text-gray-600">Loading invoices...</span>
@@ -58,7 +80,7 @@
                         <span class="px-2 py-1 rounded-full text-xs font-medium {statusClass}">
                             {paymentStatus}
                         </span>
-                        <button hx-put="/api/invoices/{id}/status" 
+                        <button hx-put="https://handyman-invoice-worker.dangcashion.workers.dev/api/invoices/{id}/status" 
                                 hx-target="closest .border" 
                                 hx-swap="outerHTML"
                                 class="text-blue-600 hover:text-blue-800 text-sm">
@@ -69,5 +91,61 @@
             </div>
         </div>
     </template>
+    
+    <script>
+        // Set up Authorization header immediately
+        const sessionToken = localStorage.getItem('sessionToken');
+        const userEmail = localStorage.getItem('userEmail');
+        const businessName = localStorage.getItem('businessName');
+        
+        if (sessionToken) {
+            // Add authorization header to HTMX requests
+            document.body.addEventListener('htmx:beforeRequest', function(evt) {
+                evt.detail.xhr.setRequestHeader('Authorization', `Bearer ${sessionToken}`);
+            });
+        }
+        
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+        });
+        
+        function checkAuth() {
+            if (!sessionToken || !userEmail) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Display user info
+            document.getElementById('user-info').textContent = `${businessName} (${userEmail})`;
+        }
+        
+        function logout() {
+            const sessionToken = localStorage.getItem('sessionToken');
+            if (sessionToken) {
+                const formData = new FormData();
+                formData.append('sessionToken', sessionToken);
+                
+                fetch(HANDYMAN_CONFIG.getEndpoint('/auth/logout'), {
+                    method: 'POST',
+                    body: formData
+                }).finally(() => {
+                    localStorage.removeItem('sessionToken');
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('businessName');
+                    window.location.href = 'login.html';
+                });
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+        
+        // Set HTMX URLs using config
+        document.getElementById('refresh-button').setAttribute('hx-get', HANDYMAN_CONFIG.getEndpoint('/api/invoices'));
+        document.getElementById('invoice-list').setAttribute('hx-get', HANDYMAN_CONFIG.getEndpoint('/api/invoices'));
+        
+        // Set search URL
+        document.getElementById('search-input').setAttribute('hx-get', HANDYMAN_CONFIG.getEndpoint('/api/invoices'));
+    </script>
 </body>
 </html> 
