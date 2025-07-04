@@ -30,7 +30,7 @@
             <div class="mb-6 p-4 bg-blue-50 rounded-lg">
                 <h3 class="font-semibold text-blue-900 mb-2">Login Credentials:</h3>
                 <p class="text-blue-800"><strong>Email:</strong> john@handyman.com</p>
-                <p class="text-blue-800"><strong>Password:</strong> password123</p>
+                <p class="text-blue-800"><strong>Password:</strong> literallymypassword</p>
             </div>
 
             <div class="flex justify-center">
@@ -108,7 +108,7 @@
             try {
                 // Load the dummy data generator script
                 const script = document.createElement('script');
-                script.src = '../create-dummy-data.js';
+                script.src = './create-dummy-data.js';
                 document.head.appendChild(script);
                 
                 script.onload = async () => {
