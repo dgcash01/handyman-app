@@ -23,7 +23,7 @@
                 log('Step 1: Attempting login...');
                 const formData = new URLSearchParams();
                 formData.append('email', 'john@handyman.com');
-                formData.append('password', 'password123');
+                formData.append('password', 'literallymypassword');
                 
                 const response = await fetch(HANDYMAN_CONFIG.getEndpoint('/auth/login'), {
                     method: 'POST',
