@@ -267,6 +267,7 @@
         
         function checkAuth() {
             if (!sessionToken || !userEmail) {
+                console.log('No session token or user email found');
                 window.location.href = 'login.html';
                 return;
             }
@@ -274,6 +275,29 @@
             // Display user info
             document.getElementById('user-info').textContent = `${businessName} (${userEmail})`;
             document.getElementById('business-name').textContent = businessName;
+            
+            // Test authentication with a simple API call
+            testAuthentication();
+        }
+        
+        async function testAuthentication() {
+            try {
+                const response = await fetch(HANDYMAN_CONFIG.getEndpoint('/api/invoices'), {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+                
+                if (response.status === 401) {
+                    console.log('Session expired, redirecting to login');
+                    localStorage.removeItem('sessionToken');
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('businessName');
+                    window.location.href = 'login.html';
+                }
+            } catch (error) {
+                console.error('Authentication test failed:', error);
+            }
         }
         
         function logout() {
@@ -317,6 +341,13 @@
                     document.getElementById('total-invoices').textContent = totalInvoices;
                     document.getElementById('total-revenue').textContent = `$${totalRevenue.toFixed(2)}`;
                     document.getElementById('pending-invoices').textContent = pendingInvoices;
+                } else if (response.status === 401) {
+                    // Authentication failed, redirect to login
+                    console.log('Authentication failed, redirecting to login');
+                    window.location.href = 'login.html';
+                    return;
+                } else {
+                    console.error('Failed to load invoices:', response.status, response.statusText);
                 }
                 
                 // Load quotes for stats
@@ -333,10 +364,22 @@
                     ).length;
                     
                     document.getElementById('active-quotes').textContent = activeQuotes;
+                } else if (quotesResponse.status === 401) {
+                    // Authentication failed, redirect to login
+                    console.log('Authentication failed, redirecting to login');
+                    window.location.href = 'login.html';
+                    return;
+                } else {
+                    console.error('Failed to load quotes:', quotesResponse.status, quotesResponse.statusText);
                 }
                 
             } catch (error) {
                 console.error('Error loading dashboard stats:', error);
+                // Check if it's an authentication error
+                if (error.message.includes('Unexpected token')) {
+                    console.log('Possible authentication issue, redirecting to login');
+                    window.location.href = 'login.html';
+                }
             }
         }
         
@@ -377,8 +420,22 @@
                     `).join('');
                     
                     activityDiv.innerHTML = html;
+                } else if (response.status === 401) {
+                    // Authentication failed, redirect to login
+                    console.log('Authentication failed, redirecting to login');
+                    window.location.href = 'login.html';
+                    return;
+                } else {
+                    activityDiv.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load recent invoices</p>';
                 }
             } catch (error) {
+                console.error('Error loading recent invoices:', error);
+                // Check if it's an authentication error
+                if (error.message.includes('Unexpected token')) {
+                    console.log('Possible authentication issue, redirecting to login');
+                    window.location.href = 'login.html';
+                    return;
+                }
                 activityDiv.innerHTML = '<p class="text-red-500 text-center py-8">Error loading recent invoices</p>';
             }
         }
@@ -454,9 +511,23 @@
                 if (response.ok) {
                     allInvoices = await response.json();
                     updateChart('daily'); // Start with daily view
+                } else if (response.status === 401) {
+                    // Authentication failed, redirect to login
+                    console.log('Authentication failed, redirecting to login');
+                    window.location.href = 'login.html';
+                    return;
+                } else {
+                    console.error('Failed to load chart data:', response.status, response.statusText);
+                    document.getElementById('chart-loading').innerHTML = '<p class="text-red-500">Failed to load chart data</p>';
                 }
             } catch (error) {
                 console.error('Error loading chart data:', error);
+                // Check if it's an authentication error
+                if (error.message.includes('Unexpected token')) {
+                    console.log('Possible authentication issue, redirecting to login');
+                    window.location.href = 'login.html';
+                    return;
+                }
                 document.getElementById('chart-loading').innerHTML = '<p class="text-red-500">Error loading chart data</p>';
             }
         }
