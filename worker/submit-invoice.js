@@ -511,16 +511,31 @@ async function getInvoices(request, env) {
     }
     // Sort by creation date (newest first)
     invoices.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    // Generate HTML for HTMX
-    const invoicesHtml = invoices.length > 0 
-      ? invoices.map(invoice => generateInvoiceHtml(invoice)).join('')
-      : '<div class="text-center py-8 text-gray-500">No invoices found</div>';
-    return new Response(invoicesHtml, {
-      headers: { 
-        'Content-Type': 'text/html',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    
+    // Check if this is an API call (has Authorization header) or HTMX request
+    const isApiCall = request.headers.get('Authorization');
+    const isHtmxRequest = request.headers.get('HX-Request');
+    
+    if (isApiCall && !isHtmxRequest) {
+      // Return JSON for API calls
+      return new Response(JSON.stringify(invoices), {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    } else {
+      // Generate HTML for HTMX requests
+      const invoicesHtml = invoices.length > 0 
+        ? invoices.map(invoice => generateInvoiceHtml(invoice)).join('')
+        : '<div class="text-center py-8 text-gray-500">No invoices found</div>';
+      return new Response(invoicesHtml, {
+        headers: { 
+          'Content-Type': 'text/html',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
       } catch (error) {
       console.error('=== ERROR in getInvoices ===');
       console.error('Error message:', error.message);
