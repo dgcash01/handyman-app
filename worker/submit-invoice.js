@@ -1031,6 +1031,41 @@ function generatePDFHtml(invoiceData) {
 // Test R2 access
 async function testR2Access(request, env) {
   try {
+    const body = await request.json();
+    const { action, key, data } = body;
+    
+    console.log('R2 access request:', { action, key });
+    
+    if (action === 'get') {
+      const file = await env.INVOICE_BUCKET.get(key);
+      if (!file) {
+        return new Response('Not Found', { 
+          status: 404,
+          headers: { 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+      const fileData = JSON.parse(await file.text());
+      return new Response(JSON.stringify(fileData), {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+    
+    if (action === 'put') {
+      await env.INVOICE_BUCKET.put(key, JSON.stringify(data), {
+        httpMetadata: { contentType: 'application/json' }
+      });
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+    
+    // Default test behavior
     console.log('Testing R2 access...');
     // Test basic list operation
     const list = await env.INVOICE_BUCKET.list();
