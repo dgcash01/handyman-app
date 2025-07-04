@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Dummy Data Generator - Handyman App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="config.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Debug Dummy Data Generator</h1>
+            <p class="text-gray-600">Let's see what's happening with the data generation</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Debug Steps:</h2>
+                <ol class="space-y-2 text-gray-600 list-decimal list-inside">
+                    <li>Check if John's account exists</li>
+                    <li>Generate sample data</li>
+                    <li>Test uploading to backend</li>
+                    <li>Verify data was saved</li>
+                </ol>
+            </div>
+
+            <div class="flex justify-center">
+                <button id="debug-btn" onclick="startDebug()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
+                    🔍 Start Debug
+                </button>
+            </div>
+
+            <div id="debug-output" class="mt-6">
+                <div id="log" class="max-h-96 overflow-y-auto bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm">
+                    <div>Ready to debug...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function startDebug() {
+            const btn = document.getElementById('debug-btn');
+            btn.disabled = true;
+            btn.textContent = 'Debugging...';
+            
+            log('🔍 Starting debug process...');
+            
+            try {
+                // Step 1: Check if John's account exists
+                log('Step 1: Checking if John\'s account exists...');
+                const userResponse = await fetch(HANDYMAN_CONFIG.getEndpoint('/api/test-r2-access'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'get',
+                        key: 'users/john@handyman.com.json'
+                    })
+                });
+                
+                if (userResponse.ok) {
+                    const userData = await userResponse.json();
+                    log('✅ John\'s account exists: ' + JSON.stringify(userData, null, 2));
+                } else {
+                    log('❌ John\'s account not found, creating it...');
+                    // Create John's account
+                    const createResponse = await fetch(HANDYMAN_CONFIG.getEndpoint('/auth/register'), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                            businessName: "John's Handyman Services",
+                            email: 'john@handyman.com',
+                            password: 'literallymypassword'
+                        })
+                    });
+                    
+                    if (createResponse.ok) {
+                        log('✅ John\'s account created successfully');
+                    } else {
+                        const errorText = await createResponse.text();
+                        log('❌ Failed to create account: ' + errorText);
+                    }
+                }
+                
+                // Step 2: Test creating a single invoice
+                log('Step 2: Testing single invoice creation...');
+                const testInvoice = {
+                    id: crypto.randomUUID(),
+                    invoiceNumber: 'INV-2024-TEST-001',
+                    userId: 'john@handyman.com',
+                    businessName: "John's Handyman Services",
+                    senderEmail: 'john@handyman.com',
+                    clientName: 'Test Client',
+                    clientEmail: 'test@example.com',
+                    clientAddress: '123 Test St, Test City, IL 12345',
+                    serviceDescription: 'Test Service',
+                    amount: 150.00,
+                    invoiceDate: '2024-01-15',
+                    paymentStatus: 'pending',
+                    createdAt: new Date().toISOString()
+                };
+                
+                log('Creating test invoice: ' + JSON.stringify(testInvoice, null, 2));
+                
+                const invoiceResponse = await fetch(HANDYMAN_CONFIG.getEndpoint('/api/test-r2-access'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'put',
+                        key: `invoices/john@handyman.com/${testInvoice.id}.json`,
+                        data: testInvoice
+                    })
+                });
+                
+                if (invoiceResponse.ok) {
+                    log('✅ Test invoice created successfully');
+                } else {
+                    const errorText = await invoiceResponse.text();
+                    log('❌ Failed to create test invoice: ' + errorText);
+                }
+                
+                // Step 3: Test retrieving the invoice
+                log('Step 3: Testing invoice retrieval...');
+                const retrieveResponse = await fetch(HANDYMAN_CONFIG.getEndpoint('/api/test-r2-access'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'get',
+                        key: `invoices/john@handyman.com/${testInvoice.id}.json`
+                    })
+                });
+                
+                if (retrieveResponse.ok) {
+                    const retrievedInvoice = await retrieveResponse.json();
+                    log('✅ Test invoice retrieved successfully: ' + JSON.stringify(retrievedInvoice, null, 2));
+                } else {
+                    const errorText = await retrieveResponse.text();
+                    log('❌ Failed to retrieve test invoice: ' + errorText);
+                }
+                
+                // Step 4: Test the actual API endpoint
+                log('Step 4: Testing API endpoint...');
+                
+                // First login to get a session token
+                log('Logging in to get session token...');
+                const loginResponse = await fetch(HANDYMAN_CONFIG.getEndpoint('/auth/login'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        email: 'john@handyman.com',
+                        password: 'literallymypassword'
+                    })
+                });
+                
+                if (loginResponse.ok) {
+                    const loginHtml = await loginResponse.text();
+                    const sessionMatch = loginHtml.match(/localStorage\.setItem\('sessionToken', '([^']+)'\)/);
+                    
+                    if (sessionMatch) {
+                        const sessionToken = sessionMatch[1];
+                        log('✅ Got session token: ' + sessionToken.substring(0, 20) + '...');
+                        
+                        // Test the invoices API
+                        const apiResponse = await fetch(HANDYMAN_CONFIG.getEndpoint('/api/invoices'), {
+                            headers: {
+                                'Authorization': `Bearer ${sessionToken}`
+                            }
+                        });
+                        
+                        if (apiResponse.ok) {
+                            const invoices = await apiResponse.json();
+                            log('✅ API call successful! Found ' + invoices.length + ' invoices');
+                            if (invoices.length > 0) {
+                                log('Sample invoice: ' + JSON.stringify(invoices[0], null, 2));
+                            }
+                        } else {
+                            const errorText = await apiResponse.text();
+                            log('❌ API call failed: ' + errorText);
+                        }
+                    } else {
+                        log('❌ Could not extract session token from login response');
+                    }
+                } else {
+                    const errorText = await loginResponse.text();
+                    log('❌ Login failed: ' + errorText);
+                }
+                
+                log('🔍 Debug process complete!');
+                
+            } catch (error) {
+                log('❌ ERROR: ' + error.message);
+                log('Stack: ' + error.stack);
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '🔍 Start Debug';
+        }
+    </script>
+</body>
+</html> 
