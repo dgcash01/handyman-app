@@ -276,8 +276,10 @@
             document.getElementById('user-info').textContent = `${businessName} (${userEmail})`;
             document.getElementById('business-name').textContent = businessName;
             
-            // Test authentication with a simple API call
-            testAuthentication();
+            // Test authentication with a delay to allow session to be fully established
+            setTimeout(() => {
+                testAuthentication();
+            }, 2000);
         }
         
         async function testAuthentication() {
@@ -294,9 +296,12 @@
                     localStorage.removeItem('userEmail');
                     localStorage.removeItem('businessName');
                     window.location.href = 'login.html';
+                } else if (response.ok) {
+                    console.log('Authentication test successful');
                 }
             } catch (error) {
                 console.error('Authentication test failed:', error);
+                // Don't redirect on network errors, only on 401
             }
         }
         
