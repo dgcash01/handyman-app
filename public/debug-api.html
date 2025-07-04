@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug API - Handyman App</title>
+    <script src="config.js"></script>
+</head>
+<body>
+    <h1>Debug API Response</h1>
+    <div id="output"></div>
+    
+    <script>
+        function log(message) {
+            document.getElementById('output').innerHTML += '<p>' + message + '</p>';
+        }
+        
+        async function debugAPI() {
+            log('Starting API debug...');
+            
+            try {
+                // First, get the session token from localStorage
+                const sessionToken = localStorage.getItem('sessionToken');
+                if (!sessionToken) {
+                    log('No session token found in localStorage');
+                    return;
+                }
+                
+                log('Session token found: ' + sessionToken.substring(0, 20) + '...');
+                
+                // Test the API call
+                log('Making API call to /api/invoices...');
+                const response = await fetch(HANDYMAN_CONFIG.getEndpoint('/api/invoices'), {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+                
+                log('Response status: ' + response.status);
+                log('Response headers: ' + response.headers.get('content-type'));
+                
+                const responseText = await response.text();
+                log('Response length: ' + responseText.length);
+                log('Response preview (first 500 chars):');
+                log('<pre>' + responseText.substring(0, 500) + '</pre>');
+                
+                if (response.ok) {
+                    try {
+                        const jsonData = JSON.parse(responseText);
+                        log('JSON parsed successfully!');
+                        log('Data type: ' + typeof jsonData);
+                        if (Array.isArray(jsonData)) {
+                            log('Array length: ' + jsonData.length);
+                        }
+                    } catch (parseError) {
+                        log('Failed to parse JSON: ' + parseError.message);
+                    }
+                } else {
+                    log('API call failed with status: ' + response.status);
+                }
+                
+            } catch (error) {
+                log('ERROR: ' + error.message);
+            }
+        }
+        
+        // Run the debug
+        debugAPI();
+    </script>
+</body>
+</html> 
