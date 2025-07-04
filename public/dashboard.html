@@ -291,7 +291,7 @@
                 });
                 
                 if (quotesResponse.ok) {
-                    const quotes = await response.json();
+                    const quotes = await quotesResponse.json();
                     const activeQuotes = quotes.filter(quote => 
                         ['draft', 'sent', 'pending'].includes(quote.status)
                     ).length;
