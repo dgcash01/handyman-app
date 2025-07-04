@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Handyman App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="config.js"></script>
+    <style>
+        .htmx-indicator {
+            opacity: 0;
+            transition: opacity 200ms ease-in;
+        }
+        .htmx-request .htmx-indicator {
+            opacity: 1;
+        }
+        .htmx-request.htmx-indicator {
+            opacity: 1;
+        }
+        
+        @keyframes hammer-bounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-8px) rotate(-5deg); }
+            50% { transform: translateY(-12px) rotate(0deg); }
+            75% { transform: translateY(-8px) rotate(5deg); }
+        }
+        
+        .hammer-animation svg {
+            animation: hammer-bounce 1s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center gap-4">
+                <div class="hammer-animation">
+                    <svg class="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-900">Dashboard</h1>
+                    <p class="text-gray-600">Welcome back, <span id="business-name"></span></p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-600" id="user-info"></span>
+                
+                <!-- Hamburger Menu -->
+                <div class="relative">
+                    <button id="menu-button" class="p-2 rounded-lg hover:bg-gray-200 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="menu-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden z-50">
+                        <div class="py-2">
+                            <a href="dashboard.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors bg-blue-50">
+                                Dashboard
+                            </a>
+                            <a href="index.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                                Create Invoice
+                            </a>
+                            <a href="quick-quote.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                                Create Quote
+                            </a>
+                            <a href="quotes.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                                View Quotes
+                            </a>
+                            <a href="invoices.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                                View Invoices
+                            </a>
+                            <hr class="my-2">
+                            <button onclick="logout()" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Invoices</p>
+                        <p class="text-2xl font-bold text-gray-900" id="total-invoices">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+                        <p class="text-2xl font-bold text-gray-900" id="total-revenue">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-yellow-100 rounded-lg">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Quotes</p>
+                        <p class="text-2xl font-bold text-gray-900" id="active-quotes">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Pending Invoices</p>
+                        <p class="text-2xl font-bold text-gray-900" id="pending-invoices">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- Quick Quote -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Quick Quote</h2>
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-gray-600 mb-4">Create a quick quote for phone calls or on-site estimates</p>
+                <a href="quick-quote.html" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                    Create Quote
+                    <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
+
+            <!-- Create Invoice -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Create Invoice</h2>
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-gray-600 mb-4">Generate a professional invoice for completed work</p>
+                <a href="index.html" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                    Create Invoice
+                    <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">Recent Activity</h2>
+                <div class="flex gap-2">
+                    <button onclick="loadRecentInvoices()" class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors">
+                        Invoices
+                    </button>
+                    <button onclick="loadRecentQuotes()" class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        Quotes
+                    </button>
+                </div>
+            </div>
+            
+            <div id="recent-activity" class="space-y-4">
+                <div class="flex justify-center items-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span class="ml-3 text-gray-600">Loading recent activity...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set up Authorization header immediately
+        const sessionToken = localStorage.getItem('sessionToken');
+        const userEmail = localStorage.getItem('userEmail');
+        const businessName = localStorage.getItem('businessName');
+        
+        if (sessionToken) {
+            // Add authorization header to HTMX requests
+            document.body.addEventListener('htmx:beforeRequest', function(evt) {
+                evt.detail.xhr.setRequestHeader('Authorization', `Bearer ${sessionToken}`);
+            });
+        }
+        
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadDashboardStats();
+            loadRecentInvoices();
+        });
+        
+        function checkAuth() {
+            if (!sessionToken || !userEmail) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Display user info
+            document.getElementById('user-info').textContent = `${businessName} (${userEmail})`;
+            document.getElementById('business-name').textContent = businessName;
+        }
+        
+        function logout() {
+            const sessionToken = localStorage.getItem('sessionToken');
+            if (sessionToken) {
+                const formData = new FormData();
+                formData.append('sessionToken', sessionToken);
+                
+                fetch(HANDYMAN_CONFIG.getEndpoint('/auth/logout'), {
+                    method: 'POST',
+                    body: formData
+                }).finally(() => {
+                    localStorage.removeItem('sessionToken');
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('businessName');
+                    window.location.href = 'login.html';
+                });
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+        
+        async function loadDashboardStats() {
+            try {
+                // Load invoices for stats
+                const response = await fetch(HANDYMAN_CONFIG.getEndpoint('/api/invoices'), {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const invoices = await response.json();
+                    
+                    // Calculate stats
+                    const totalInvoices = invoices.length;
+                    const totalRevenue = invoices.reduce((sum, invoice) => sum + parseFloat(invoice.amount), 0);
+                    const pendingInvoices = invoices.filter(invoice => invoice.paymentStatus === 'pending').length;
+                    
+                    // Update stats
+                    document.getElementById('total-invoices').textContent = totalInvoices;
+                    document.getElementById('total-revenue').textContent = `$${totalRevenue.toFixed(2)}`;
+                    document.getElementById('pending-invoices').textContent = pendingInvoices;
+                }
+                
+                // Load quotes for stats
+                const quotesResponse = await fetch(HANDYMAN_CONFIG.getEndpoint('/api/quotes'), {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+                
+                if (quotesResponse.ok) {
+                    const quotes = await response.json();
+                    const activeQuotes = quotes.filter(quote => 
+                        ['draft', 'sent', 'pending'].includes(quote.status)
+                    ).length;
+                    
+                    document.getElementById('active-quotes').textContent = activeQuotes;
+                }
+                
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+            }
+        }
+        
+        async function loadRecentInvoices() {
+            const activityDiv = document.getElementById('recent-activity');
+            activityDiv.innerHTML = '<div class="flex justify-center items-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><span class="ml-3 text-gray-600">Loading...</span></div>';
+            
+            try {
+                const response = await fetch(HANDYMAN_CONFIG.getEndpoint('/api/invoices'), {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const invoices = await response.json();
+                    const recentInvoices = invoices.slice(0, 5); // Show last 5
+                    
+                    if (recentInvoices.length === 0) {
+                        activityDiv.innerHTML = '<p class="text-gray-500 text-center py-8">No invoices yet. Create your first invoice!</p>';
+                        return;
+                    }
+                    
+                    const html = recentInvoices.map(invoice => `
+                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900">${invoice.clientName}</h3>
+                                <p class="text-sm text-gray-600">${invoice.serviceDescription}</p>
+                                <p class="text-xs text-gray-500">${new Date(invoice.invoiceDate).toLocaleDateString()}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-gray-900">$${parseFloat(invoice.amount).toFixed(2)}</p>
+                                <span class="px-2 py-1 text-xs rounded-full ${invoice.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${invoice.paymentStatus}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    activityDiv.innerHTML = html;
+                }
+            } catch (error) {
+                activityDiv.innerHTML = '<p class="text-red-500 text-center py-8">Error loading recent invoices</p>';
+            }
+        }
+        
+        async function loadRecentQuotes() {
+            const activityDiv = document.getElementById('recent-activity');
+            activityDiv.innerHTML = '<div class="flex justify-center items-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><span class="ml-3 text-gray-600">Loading...</span></div>';
+            
+            try {
+                const response = await fetch(HANDYMAN_CONFIG.getEndpoint('/api/quotes'), {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const quotes = await response.json();
+                    const recentQuotes = quotes.slice(0, 5); // Show last 5
+                    
+                    if (recentQuotes.length === 0) {
+                        activityDiv.innerHTML = '<p class="text-gray-500 text-center py-8">No quotes yet. Create your first quote!</p>';
+                        return;
+                    }
+                    
+                    const html = recentQuotes.map(quote => `
+                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900">${quote.clientName}</h3>
+                                <p class="text-sm text-gray-600">${quote.projectDescription}</p>
+                                <p class="text-xs text-gray-500">${new Date(quote.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-gray-900">$${parseFloat(quote.totalAmount).toFixed(2)}</p>
+                                <span class="px-2 py-1 text-xs rounded-full status-${quote.status}">
+                                    ${quote.status}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    activityDiv.innerHTML = html;
+                }
+            } catch (error) {
+                activityDiv.innerHTML = '<p class="text-red-500 text-center py-8">Error loading recent quotes</p>';
+            }
+        }
+        
+        // Hamburger menu functionality
+        const menuButton = document.getElementById('menu-button');
+        const menuDropdown = document.getElementById('menu-dropdown');
+        
+        menuButton.addEventListener('click', function() {
+            menuDropdown.classList.toggle('hidden');
+        });
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!menuButton.contains(event.target) && !menuDropdown.contains(event.target)) {
+                menuDropdown.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html> 

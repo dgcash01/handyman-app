@@ -131,7 +131,7 @@ async function handleLogin(request, env) {
         localStorage.setItem('sessionToken', '${sessionToken}');
         localStorage.setItem('userEmail', '${email}');
         localStorage.setItem('businessName', '${userData.businessName}');
-        setTimeout(() => window.location.href = 'index.html', 1000);
+        setTimeout(() => window.location.href = 'dashboard.html', 1000);
       </script>
     `;
     
